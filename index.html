@@ -1,0 +1,745 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Aquarium Date</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    --paper: #f4ede0;
+    --teal: #2f9e9a;
+    --teal-dark: #23807c;
+    --ink: #2d4f4a;
+    --coral: #d4402a;
+    --coral-dark: #9c2a1a;
+    --blush: #e9c3b8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: 20px 32px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    background-color: #bfe3df;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(233, 195, 184, .75) 0, transparent 45%),
+      radial-gradient(circle at 90% 85%, rgba(233, 195, 184, .6) 0, transparent 40%),
+      radial-gradient(circle at 80% 15%, rgba(255, 255, 255, .5) 0, transparent 35%),
+      linear-gradient(170deg, #d9f0ed 0%, #bfe3df 55%, #f3d9d0 100%);
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+
+  /* ---------- Bubbles ---------- */
+  .bubbles, .burst-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .bubbles { z-index: 0; }
+  .burst-layer { z-index: 50; }
+
+  .bubble {
+    position: absolute;
+    bottom: -80px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.85), rgba(255,255,255,.2) 55%, rgba(255,255,255,.06) 100%);
+    border: 1px solid rgba(255, 255, 255, .55);
+    animation: rise var(--dur, 18s) linear var(--delay, 0s) infinite;
+    will-change: transform;
+  }
+  @keyframes rise {
+    0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+    10%  { opacity: .9; }
+    90%  { opacity: .8; }
+    100% { transform: translate3d(var(--drift, 20px), -120vh, 0); opacity: 0; }
+  }
+
+  /* ---------- Card ---------- */
+  .card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 380px;
+    background: var(--paper);
+    border-radius: 30px;
+    padding: 34px 26px 30px;
+    overflow: hidden;
+    box-shadow: 0 9px 0 var(--teal), 0 22px 36px rgba(45, 79, 74, .22);
+    isolation: isolate;
+  }
+  .card::before { /* dashed inner border */
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 1.5px dashed rgba(47, 158, 154, .7);
+    border-radius: 22px;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .card::after { /* pale pink circle */
+    content: "";
+    position: absolute;
+    top: -70px;
+    right: -70px;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: var(--blush);
+    opacity: .55;
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  .step { display: none; }
+  .step.active { display: block; }
+  .step.pop { animation: pop .45s cubic-bezier(.34, 1.56, .64, 1); }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(.92) translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .step h1, .step h2:focus, .step h1:focus { outline: none; }
+
+  .label {
+    margin: 0 0 14px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .28em;
+    color: var(--teal);
+  }
+
+  h1, h2 {
+    margin: 0 0 10px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  h1 { font-size: clamp(2rem, 9vw, 2.45rem); max-width: 90%; }
+  h2 { font-size: clamp(1.6rem, 7vw, 1.9rem); }
+
+  .sub {
+    margin: 0 0 16px;
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  .tag {
+    display: inline-block;
+    margin: 0 0 14px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(47, 158, 154, .14);
+    border: 1px solid rgba(47, 158, 154, .45);
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    background: var(--coral);
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 28px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 var(--coral-dark), 0 10px 14px rgba(156, 42, 26, .25);
+    transition: transform .1s ease, box-shadow .1s ease, filter .15s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--coral-dark), 0 3px 6px rgba(156, 42, 26, .25);
+  }
+  .btn.block { display: block; width: 100%; }
+
+  :is(button, input):focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  /* arena */
+  .arena {
+    position: relative;
+    height: 200px;
+    margin: 6px 0 8px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .35);
+    border: 1px solid rgba(47, 158, 154, .2);
+  }
+
+  #yesBtn {
+    position: absolute;
+    left: 38%;
+    top: 42%;
+    translate: -50% -50%;
+    width: 132px;
+    height: 50px;
+    padding: 0 10px;
+    font-size: 1.1rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition:
+      width .6s cubic-bezier(.34, 1.4, .64, 1),
+      height .6s cubic-bezier(.34, 1.4, .64, 1),
+      font-size .6s ease,
+      left .6s ease,
+      top .6s ease,
+      transform .1s ease,
+      box-shadow .1s ease,
+      filter .15s ease;
+  }
+
+  #noBtn {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 2;
+    padding: 8px 16px;
+    font-size: .92rem;
+    white-space: nowrap;
+    color: var(--ink);
+    background: rgba(255, 255, 255, .55);
+    border: 2px solid rgba(47, 158, 154, .7);
+    border-radius: 999px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      left .5s cubic-bezier(.34, 1.7, .5, 1),
+      top .5s cubic-bezier(.34, 1.7, .5, 1),
+      opacity .35s ease;
+  }
+  #noBtn.gone {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .35s ease, visibility 0s .35s;
+  }
+
+  .whisper {
+    margin: 0;
+    min-height: 1.5em;
+    padding-right: 84px;
+    font-style: italic;
+    font-size: .95rem;
+    color: var(--ink);
+    opacity: .85;
+  }
+
+  .stamp {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 74px;
+    height: 74px;
+    padding: 0;
+    border-radius: 50%;
+    border: 0;
+    background: var(--coral);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: .7rem;
+    line-height: 1.05;
+    letter-spacing: .1em;
+    cursor: pointer;
+    rotate: -12deg;
+    box-shadow: 0 4px 0 var(--coral-dark), 0 8px 12px rgba(156, 42, 26, .25);
+    transition: transform .1s ease, box-shadow .1s ease;
+    touch-action: manipulation;
+  }
+  .stamp span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, .85);
+    outline: 3px solid transparent;
+    background-clip: padding-box;
+    text-align: center;
+  }
+  .stamp:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--coral-dark);
+  }
+  /* reserve room for the stamp */
+  #step1 { padding-bottom: 58px; }
+
+  /* ---------- Step 2 ---------- */
+  .badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 66px;
+    height: 66px;
+    margin: 0 0 14px;
+    border-radius: 50%;
+    background: var(--coral);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    box-shadow: 0 4px 0 var(--coral-dark);
+    border: 2px dashed rgba(255, 255, 255, .8);
+    background-clip: padding-box;
+  }
+  .badge.teal { background: var(--teal); box-shadow: 0 4px 0 var(--teal-dark); }
+  .badge svg { width: 32px; height: 32px; }
+
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 18px 0 14px;
+  }
+  .field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: .8rem;
+    font-weight: 700;
+    font-style: italic;
+  }
+  .field input {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 8px;
+    font-family: inherit;
+    font-size: .95rem;
+    color: var(--ink);
+    background: #fffaf0;
+    border: 2px solid rgba(47, 158, 154, .55);
+    border-radius: 12px;
+  }
+  .error {
+    min-height: 1.3em;
+    margin: 0 0 8px;
+    font-size: .85rem;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--coral-dark);
+  }
+
+  /* ---------- Step 3 ---------- */
+  .result {
+    margin: 0 0 14px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .signature {
+    margin: 0 0 22px;
+    font-style: italic;
+    color: var(--teal-dark);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  @media (min-width: 420px) {
+    .card { padding: 38px 30px 32px; }
+  }
+
+  /* ---------- Reduced motion ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .bubble { animation: none; opacity: .5; bottom: auto; }
+    .step.pop { animation: none; }
+    #yesBtn, #noBtn, .btn, .stamp { transition: none !important; }
+    #noBtn.gone { transition: none; }
+  }
+</style>
+
+<div class="bubbles" id="bubbles" aria-hidden="true"></div>
+<div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
+
+<main class="card">
+
+  <!-- STEP 1 -->
+  <section class="step active" id="step1" aria-labelledby="q-title">
+    <p class="label" id="lbl"></p>
+    <h1 id="q-title" tabindex="-1"></h1>
+    <p class="sub" id="subtitle"></p>
+    <span class="tag" id="tag"></span>
+
+    <div class="arena" id="arena">
+      <button type="button" class="btn" id="yesBtn"></button>
+      <button type="button" id="noBtn"></button>
+    </div>
+
+    <p class="whisper" id="whisper" aria-live="polite"></p>
+
+    <button type="button" class="stamp" id="stampBtn" aria-label="Say yes"><span>SAY<br>YES</span></button>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step" id="step2" aria-labelledby="pick-title">
+    <div class="badge" id="badge2"></div>
+    <h2 id="pick-title" tabindex="-1"></h2>
+    <p class="sub" id="pickText"></p>
+
+    <form id="dateForm" novalidate>
+      <div class="fields">
+        <div class="field">
+          <label for="dateInput" id="dateLabel"></label>
+          <input type="date" id="dateInput" required>
+        </div>
+        <div class="field">
+          <label for="timeInput" id="timeLabel"></label>
+          <input type="time" id="timeInput" required>
+        </div>
+      </div>
+      <p class="error" id="error" role="alert"></p>
+      <button type="submit" class="btn block" id="lockBtn"></button>
+    </form>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step" id="step3" aria-labelledby="done-title">
+    <div class="badge teal" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+    <h2 id="done-title" tabindex="-1"></h2>
+    <p class="result" id="result"></p>
+    <p class="signature" id="signature"></p>
+    <button type="button" class="btn block" id="waitBtn"></button>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= CONFIG: edit your texts here ================= */
+  const CONFIG = {
+    place: 'the coral',                       // "...grinning by the coral."
+    signature: 'Forever yours, the one who asked the sea',
+    dodgesBeforeYes: 6,                       // escapes before only "Yes" remains
+
+    label: 'AQUARIUM DATE',
+    headline: 'My love, come with me?',
+    subtitle: 'A little sea date, just us two.',
+    tag: 'Pick the moment with me 🐠',
+    yesText: "Yes, let's go",
+    noText: 'No',
+    noEscapeText: 'Are you sure?',
+    stampAria: 'Say yes',
+    whisperStart: 'Take your time. Well, not too much.',
+    whispers: [
+      'A shy little no swam away.',
+      "It's slippery, that one.",
+      'Almost caught it...',
+      'Look, yes is getting bigger.',
+      'The sea is leaning toward yes.',
+      'Only yes is left now.'
+    ],
+
+    badge2: 'FOR YOU',
+    pickTitle: 'A little note, for the day you pick',
+    pickText: "The sea already feels warmer knowing you'll be beside me. Now make it official: choose our moment.",
+    dateLabel: 'Pick our day',
+    timeLabel: 'Pick our time',
+    defaultTime: '14:00',
+    lockText: 'Lock it in, see you there',
+    errorEmpty: 'Please pick both a day and a time first.',
+    errorPast: 'That day has already swum by. Pick today or later.',
+
+    doneTitle: "It's a date",
+    resultTemplate: "You and me, {date} at {time}. I'll be the one grinning by {place}.",
+    waitText: "Can't wait"
+  };
+  /* ================================================================ */
+
+  const $ = id => document.getElementById(id);
+  const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- fill texts from CONFIG ----
+  $('lbl').textContent = CONFIG.label;
+  $('q-title').textContent = CONFIG.headline;
+  $('subtitle').textContent = CONFIG.subtitle;
+  $('tag').textContent = CONFIG.tag;
+  $('yesBtn').textContent = CONFIG.yesText;
+  $('noBtn').textContent = CONFIG.noText;
+  $('whisper').textContent = CONFIG.whisperStart;
+  $('stampBtn').setAttribute('aria-label', CONFIG.stampAria);
+  $('badge2').textContent = CONFIG.badge2;
+  $('pick-title').textContent = CONFIG.pickTitle;
+  $('pickText').textContent = CONFIG.pickText;
+  $('dateLabel').textContent = CONFIG.dateLabel;
+  $('timeLabel').textContent = CONFIG.timeLabel;
+  $('lockBtn').textContent = CONFIG.lockText;
+  $('done-title').textContent = CONFIG.doneTitle;
+  $('signature').textContent = CONFIG.signature;
+  $('waitBtn').textContent = CONFIG.waitText;
+  $('yesBtn').classList.add('btn');
+
+  /* ================= Background bubbles ================= */
+  const bubbleWrap = $('bubbles');
+  const BUBBLE_COUNT = 16;
+  for (let i = 0; i < BUBBLE_COUNT; i++) {
+    const b = document.createElement('span');
+    b.className = 'bubble';
+    const size = 10 + Math.random() * 34;
+    const dur = 16 + Math.random() * 18;
+    b.style.width = b.style.height = size + 'px';
+    b.style.left = (Math.random() * 100) + '%';
+    b.style.setProperty('--dur', dur + 's');
+    b.style.setProperty('--delay', (-Math.random() * dur) + 's');
+    b.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+    if (reduceMotion()) b.style.top = (Math.random() * 90) + '%';
+    bubbleWrap.appendChild(b);
+  }
+
+  /* ================= Bubble burst ================= */
+  const burstLayer = $('burstLayer');
+  function burst(fromEl) {
+    if (reduceMotion()) return;
+    const r = fromEl.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const n = 26;
+    for (let i = 0; i < n; i++) {
+      const b = document.createElement('span');
+      b.className = 'bubble';
+      b.style.animation = 'none';
+      b.style.bottom = 'auto';
+      const size = 8 + Math.random() * 26;
+      b.style.width = b.style.height = size + 'px';
+      b.style.left = (cx - size / 2) + 'px';
+      b.style.top = (cy - size / 2) + 'px';
+      burstLayer.appendChild(b);
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 70 + Math.random() * 190;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 120 - Math.random() * 120; // bubbles float upward
+      const anim = b.animate([
+        { transform: 'translate(0,0) scale(.3)', opacity: 0 },
+        { transform: `translate(${dx * .5}px, ${dy * .4}px) scale(1)`, opacity: 1, offset: .3 },
+        { transform: `translate(${dx}px, ${dy}px) scale(1.1)`, opacity: 0 }
+      ], {
+        duration: 1300 + Math.random() * 1100,
+        easing: 'cubic-bezier(.2,.7,.3,1)',
+        delay: Math.random() * 150
+      });
+      anim.onfinish = () => b.remove();
+    }
+  }
+
+  /* ================= Steps ================= */
+  const steps = [$('step1'), $('step2'), $('step3')];
+  const headings = ['q-title', 'pick-title', 'done-title'];
+  function goTo(n) {
+    steps.forEach((s, i) => {
+      s.classList.toggle('active', i === n);
+      s.classList.remove('pop');
+    });
+    const s = steps[n];
+    void s.offsetWidth;            // restart animation
+    s.classList.add('pop');
+    const h = $(headings[n]);
+    if (h) h.focus({ preventScroll: true });
+  }
+
+  /* ================= Step 1: dodge game ================= */
+  const arena = $('arena');
+  const yesBtn = $('yesBtn');
+  const noBtn = $('noBtn');
+  const whisper = $('whisper');
+
+  const YES = { w0: 132, h0: 50, f0: 17.6, fEnd: 34, x0: 38, y0: 42 };
+  let dodges = 0;
+  let lastDodge = 0;
+
+  function yesGeometry(progress) {
+    const aw = arena.clientWidth;
+    const ah = arena.clientHeight;
+    const p = Math.min(1, Math.max(0, progress));
+    const lerp = (a, b) => a + (b - a) * p;
+    const w = lerp(YES.w0, aw * 0.8);
+    const h = lerp(YES.h0, ah * 0.8);
+    return {
+      w, h,
+      font: lerp(YES.f0, YES.fEnd),
+      xPct: lerp(YES.x0, 50),
+      yPct: lerp(YES.y0, 50),
+      cx: aw * lerp(YES.x0, 50) / 100,
+      cy: ah * lerp(YES.y0, 50) / 100
+    };
+  }
+
+  function applyYes() {
+    const total = Math.max(1, CONFIG.dodgesBeforeYes);
+    const g = yesGeometry(dodges / total);
+    yesBtn.style.width = g.w + 'px';
+    yesBtn.style.height = g.h + 'px';
+    yesBtn.style.fontSize = g.font + 'px';
+    yesBtn.style.left = g.xPct + '%';
+    yesBtn.style.top = g.yPct + '%';
+  }
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+  function placeNoInitial() {
+    const aw = arena.clientWidth, ah = arena.clientHeight;
+    noBtn.style.left = clamp(aw - noBtn.offsetWidth - 10, 0, aw) + 'px';
+    noBtn.style.top = clamp(ah - noBtn.offsetHeight - 12, 0, ah) + 'px';
+  }
+
+  function randomNoPosition() {
+    const aw = arena.clientWidth, ah = arena.clientHeight;
+    const nw = noBtn.offsetWidth, nh = noBtn.offsetHeight;
+    const maxX = Math.max(0, aw - nw), maxY = Math.max(0, ah - nh);
+    const total = Math.max(1, CONFIG.dodgesBeforeYes);
+    const g = yesGeometry(Math.min(dodges + 1, total) / total); // where Yes is heading
+    const pad = 8;
+    const yl = g.cx - g.w / 2 - pad, yr = g.cx + g.w / 2 + pad;
+    const yt = g.cy - g.h / 2 - pad, yb = g.cy + g.h / 2 + pad;
+
+    const curX = parseFloat(noBtn.style.left) || 0;
+    const curY = parseFloat(noBtn.style.top) || 0;
+    let best = null, bestScore = -1;
+    for (let i = 0; i < 24; i++) {
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+      const overlaps = x < yr && x + nw > yl && y < yb && y + nh > yt;
+      const moved = Math.hypot(x - curX, y - curY);       // prefer a real jump
+      const score = (overlaps ? 0 : 1000) + moved;
+      if (score > bestScore) { bestScore = score; best = { x, y }; }
+    }
+    return best;
+  }
+
+  function dodge() {
+    const now = Date.now();
+    if (now - lastDodge < 250) return;      // one gesture = one escape
+    if (dodges >= CONFIG.dodgesBeforeYes) return;
+    lastDodge = now;
+
+    noBtn.textContent = CONFIG.noEscapeText;
+    dodges++;
+
+    const msgs = CONFIG.whispers;
+    const idx = dodges >= CONFIG.dodgesBeforeYes ? msgs.length - 1 : Math.min(dodges - 1, msgs.length - 1);
+    whisper.textContent = msgs[idx];
+
+    applyYes();
+
+    if (dodges >= CONFIG.dodgesBeforeYes) {
+      noBtn.classList.add('gone');
+      noBtn.disabled = true;
+      noBtn.tabIndex = -1;
+      noBtn.setAttribute('aria-hidden', 'true');
+      yesBtn.focus({ preventScroll: true });
+      return;
+    }
+    const pos = randomNoPosition();
+    noBtn.style.left = pos.x + 'px';
+    noBtn.style.top = pos.y + 'px';
+  }
+
+  ['pointerenter', 'pointerdown', 'touchstart', 'focus'].forEach(ev =>
+    noBtn.addEventListener(ev, dodge, { passive: true })
+  );
+  noBtn.addEventListener('click', e => { e.preventDefault(); dodge(); });
+
+  function sayYes(fromEl) {
+    burst(fromEl);
+    goTo(1);
+  }
+  yesBtn.addEventListener('click', () => sayYes(yesBtn));
+  $('stampBtn').addEventListener('click', () => sayYes($('stampBtn')));
+
+  window.addEventListener('resize', () => {
+    applyYes();
+    const aw = arena.clientWidth, ah = arena.clientHeight;
+    if (dodges === 0) {
+      placeNoInitial();
+    } else {
+      noBtn.style.left = clamp(parseFloat(noBtn.style.left) || 0, 0, Math.max(0, aw - noBtn.offsetWidth)) + 'px';
+      noBtn.style.top = clamp(parseFloat(noBtn.style.top) || 0, 0, Math.max(0, ah - noBtn.offsetHeight)) + 'px';
+    }
+  });
+
+  applyYes();
+  placeNoInitial();
+  // re-place once fonts/layout settle
+  window.addEventListener('load', () => { applyYes(); if (dodges === 0) placeNoInitial(); });
+
+  /* ================= Step 2: date + time ================= */
+  const dateInput = $('dateInput');
+  const timeInput = $('timeInput');
+  const errorEl = $('error');
+
+  const pad2 = n => String(n).padStart(2, '0');
+  const toISODate = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+
+  const today = new Date();
+  const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  dateInput.min = toISODate(today);        // blocks past dates
+  dateInput.value = toISODate(tomorrow);   // default: tomorrow
+  timeInput.value = CONFIG.defaultTime;    // default: 14:00
+
+  [dateInput, timeInput].forEach(el => el.addEventListener('input', () => { errorEl.textContent = ''; }));
+
+  $('dateForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const dv = dateInput.value, tv = timeInput.value;
+    if (!dv || !tv) {
+      errorEl.textContent = CONFIG.errorEmpty;
+      (!dv ? dateInput : timeInput).focus();
+      return;
+    }
+    if (dv < dateInput.min) {
+      errorEl.textContent = CONFIG.errorPast;
+      dateInput.focus();
+      return;
+    }
+    const [y, m, d] = dv.split('-').map(Number);
+    const [hh, mm] = tv.split(':').map(Number);
+    const when = new Date(y, m - 1, d, hh, mm);
+
+    const dateStr = when.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const timeStr = when.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+    $('result').textContent = CONFIG.resultTemplate
+      .replace('{date}', dateStr)
+      .replace('{time}', timeStr)
+      .replace('{place}', CONFIG.place);
+
+    goTo(2);
+    burst($('lockBtn'));
+  });
+
+  /* ================= Step 3 ================= */
+  $('waitBtn').addEventListener('click', () => burst($('waitBtn')));
+})();
+</script>
+
+</body></html>
